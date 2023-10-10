@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/basic.html}">
+<!--이 페이지는 layout/basic.html 파일로 장식(decorate) 이 됩니다. 레이아웃 프레임-->
+<head>
+    <meta charset="UTF-8">
+    <title>spring</title>
+</head>
+<body>
+<h1>Spring.html</h1>
+<!--basic.html 에서 정의된 layout:fragment="content" 에 들어갈 내용입니다.-->
+<div layout:fragment="content">
+    <hr>
+    title : [[${community.title}]]
+    writer : [[${community.writer}]]
+    name : [[${name}]]
+    age : [[${age}]]
+</div>
+<!--basic.html 에서 정의된 layout:fragment="script" 에 들어갈 내용입니다. th:inline="javascript" 는 타임리프 el 사용하기 위한 속성-->
+<script layout:fragment="script" th:inline="javascript">
+    const name=[[${name}]]
+    if(name)        //name 이 0, undefined, null, '' 이면 false, 아니면 ture
+        alert(name+"님 환영합니다.")      //name 에 값이 있을 때만 실행.
+</script>
+</body>
+</html>
