@@ -95,6 +95,7 @@ const resultOne = function (result){
 //관심분야 선택 checked 로 문자열 만들기
 const arrSubject = []
 const checkSubject = e =>{
+    // e.preventDefault()
     e.stopPropagation()
     
     const target = e.target
@@ -112,18 +113,77 @@ const checkSubject = e =>{
 document.querySelector('#checkSubjects').addEventListener('click',checkSubject)
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+//테스트
+function test(){    //함수 선언을 이렇게 하면 끌어올리기 가능
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+//id 중복체크
+let isvalid = false     //idCheck 결과를 저장하기 : 전역변수
+const idcheck = function (){
+    // let isValidId=false     //리턴 변수
+    const id = document.querySelector('#id').value
+    if(!id){
+        alert('아이디를 입력하세요.')
+        return
+    }
+    const xhr=new XMLHttpRequest()
+    xhr.open('GET', '/api/bookuser/check/'+id);
+    xhr.send()
+    xhr.onload=function(){                                //요청에 대한 응답받았을 때 이벤트 onload 핸들러 함수
+        if(xhr.status === 200 || xhr.status ===201){            // readyState 가 DONE
+            const result = JSON.parse(xhr.response)               //자바스크립트 객체의 배열로 변환(역직렬화)
+            console.log('응답 : ',result.exist)
+            //서버 응답 exist 값으로 isValidId 저장. 존재하면 새로운 회원은 사용할 수 없는 아이디
+            isvalid = !result.exist                               //result.exist 는 true 또는 false 를 리턴합니다.
+            if(isvalid){                                          //존재하지 않은 id 일때 실행
+                document.querySelector('#idMessage').innerHTML = '없는 아이디 입니다. 새로운 회원으로 사용 가능합니다.'
+                document.querySelector('#idMessage').style.color = 'red'
+                // userid = id
+            }else{                                                //존재하는 id 일때 실행
+                document.querySelector('#idMessage').innerHTML = '존재하는 아이디 입니다. 회원 정보 조회하세요.'
+                document.querySelector('#idMessage').style.color = 'blue'
+            }
+        }else {
+            console.error('오류1',xhr.status)
+            console.error('오류2',xhr.response)
+        }
+    }
+    // console.log('리턴 : ',isvalid)
+    return isvalid;           //사용할 수 있으면 true
+
+}
+document.querySelector('#id').addEventListener('keyup',idcheck)
+
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 //save 버튼 동작
-const save = function () {
+const save = function () {              //리터럴 형식의 함수선언 : 끌어올리기 안됨. 사용하기 전에 선언
+    const id = document.querySelector('#id').value;
+    
     const xhr = new XMLHttpRequest()
     xhr.open('POST', '/api/bookuser');
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
 
-    const id = document.querySelector('#id').value;
+    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    //id 중복확인
+    let yn=false
+    console.log("idcheck : ",isvalid)
+    if(!isvalid){           //idcheck 에 리턴이 true 이기 때문에 반대로 false 일때 사용할 alert
+        alert('이미 사용중인 아이디 입니다.')
+        return
+    }else{
+        yn = confirm(`아이디 '${id}' 로 회원가입 하시겠습니까?`)
+        if(!yn) return;             //confirm 에서 취소누르면 false ▶ 함수 종료
+
+    }
+    //1. 입력값 가져오기
     const name = document.querySelector('#name').value;
     const password = document.querySelector('#password').value;
     const email = document.querySelector('#email').value;
     const birth = document.querySelector('#birth').value;
 
+    //2. 입력값으로 자바스크립트 객체 생성(자바스크립트 객체는 미리 타입을 정의하지 않고 사용할수 있습니다.)
     const userData = {
         id: id,
         name: name,
@@ -132,36 +192,117 @@ const save = function () {
         birth: birth,
         subjects: arrSubject.toString()
     };
-
+    //3. 자바스크립트 객체를 json 전송을 위해 직렬화(문자열로 변환)
     const jsonData = JSON.stringify(userData);
 
     xhr.send(jsonData);
 
     xhr.onload = function () {
+        const resultObj = JSON.parse(xhr.response);
         if (xhr.status === 200 || xhr.status === 201) {
-            alert('회원 등록 성공');
+            if(resultObj.count == 1){
+                clear()
+                document.querySelector('.card-header').innerHTML ='새로운 회원 \''+id+'\'가입 되었습니다'
+                document.querySelector('.card-header').style.color='blue'
+            }
         } else {
             console.error('오류1', xhr.status);
             console.error('오류2', xhr.response);
+            const values=Object.values(resultObj);      //자바스크립트 객체는 key,value 구성 그 중에 value 만 가져와서 배열로 만듭니다.
+            console.log('오류 메시지 : ',values)
+            let resultMsg = ''
+            values.forEach(msg=> resultMsg += msg + "<br>")             //배열에 대해 실행하는 반복
+            document.querySelector('.card-header').innerHTML =resultMsg
+            document.querySelector('.card-header').style.color='red'
         }
-
     };
+    // setTimeout(clear,60000)
+    // arrSubject.splice(0,arrSubject.length)  //배열 비우기. splice 요소 삭제 (인덱스 start부터 지정된 길이만큼)
 }
 
 document.querySelector('#save').addEventListener('click', save);
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 //update 버튼 동작
+const update = function () {
+    const id = document.querySelector('#id').value;
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/bookuser'+id);
 
+    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    //1. 입력값 가져오기
+    const name = document.querySelector('#name').value;
+    const email = document.querySelector('#email').value;
+    const birth = document.querySelector('#birth').value;
 
+    //2. 입력값으로 자바스크립트 객체 생성(자바스크립트 객체는 미리 타입을 정의하지 않고 사용할수 있습니다.)
+    const userData = {
+        name: name,
+        email: email,
+        birth: birth,
+        subjects: arrSubject.toString()
+    };
+    //3. 자바스크립트 객체를 json 전송을 위해 직렬화(문자열로 변환)
+    const jsonData = JSON.stringify(userData);
 
+    xhr.send(jsonData);
 
-
-
-
-
-
-
+    xhr.onload = function () {
+        const resultObj = JSON.parse(xhr.response);
+        if (xhr.status === 200 || xhr.status === 201) {
+            if(resultObj.count == 1){
+                clear()
+                document.querySelector('.card-header').innerHTML ='새로운 회원 \''+id+'\'가입 되었습니다'
+                document.querySelector('.card-header').style.color='blue'
+            }
+        } else {
+            console.error('오류1', xhr.status);
+            console.error('오류2', xhr.response);
+            const values=Object.values(resultObj);      //자바스크립트 객체는 key,value 구성 그 중에 value 만 가져와서 배열로 만듭니다.
+            console.log('오류 메시지 : ',values)
+            let resultMsg = ''
+            values.forEach(msg=> resultMsg += msg + "<br>")             //배열에 대해 실행하는 반복
+            document.querySelector('.card-header').innerHTML =resultMsg
+            document.querySelector('.card-header').style.color='red'
+        }
+    };
+    // setTimeout(clear,60000)
+}
+document.querySelector('#update').addEventListener('click', update);
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 //delete 버튼 동작
+//회원 삭제 : DELETE
+const deleteUser = function () {
+    const xhr = new XMLHttpRequest()
+
+    const id = document.getElementById('id').value
+
+    xhr.open('DELETE','/api/bookuser/'+id)
+    xhr.send()
+    xhr.onload=function(){
+        const result = JSON.parse(xhr.response)
+        let rstCount = Object.values(result)
+        if((xhr.status === 200 || xhr.status ===201) && rstCount == 1){
+            document.querySelector('.card-header').innerHTML = '['+id+'] 회원이 삭제되었습니다.'
+            document.querySelector('.card-header').style.color = 'green'
+            alert(id+'님 정보가 삭제되었습니다.')
+        } else {
+            console.error('오류1',xhr.status)
+            console.error('오류2',xhr.response)
+
+            let resultMsg = '삭제 실패 : '
+
+            if(id.length == 0)
+                resultMsg += 'ID 를 입력하세요'
+            else
+                resultMsg += '존재하지 않는 ID'
+
+            document.querySelector('.card-header').innerHTML = resultMsg
+            document.querySelector('.card-header').style.color = 'red'
+        }
+    }
+    setTimeout(clear,7000)  //1000 = 1초
+}
+
+document.querySelector('#delete').addEventListener('click',deleteUser)

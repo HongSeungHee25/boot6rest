@@ -50,12 +50,29 @@ public class BookUserApiController {
 		log.info(">>>>>>>>>>>> path variable id : {}",id);
 		return bookUser;			//bookuser DTO 를 json 문자열로 변환시켜 전달합니다.(직렬화)
 	}
+	@GetMapping("/bookuser/check/{id}")
+	public Map<String, Boolean> check(@PathVariable String id){			//@PathVariable : url 경로로 들어온 값을 저장하는 변수
+		log.info(">>>>>>>>>>>> path variable id : {}",id);
+		int count = bookUserMapper.isExist(id);
+		Map<String, Boolean> resultMap = new HashMap<>();
+		resultMap.put("exist",(count==1));
+		return resultMap;			//map 은 key? : true
+	}
 
 	@DeleteMapping("/bookuser/{id}")
 	public Map<String,Integer> delete(@PathVariable String id) {
 		int conut = bookUserMapper.delete(id);
 		Map<String,Integer> resultMap = new HashMap<>();
 		resultMap.put("count",conut);
+
+		return resultMap;
+	}
+
+	@PostMapping("/bookuser/{id}")
+	public Map<String, Integer> update(@RequestBody BookUser vo, String id){
+		int result = bookUserMapper.changeMany(vo);
+		Map<String,Integer> resultMap = new HashMap<>();
+		resultMap.put("result",result);
 
 		return resultMap;
 	}
