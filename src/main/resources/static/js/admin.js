@@ -11,6 +11,12 @@ const clear = function(){
 }
 
 document.querySelector('#clear').addEventListener('click',clear)
+//콜백함수는 메소드 또는 함수안에서 인자로 사용되는 함수                            ㄴ 이게 콜백 함수
+//addEventListener 는 클릭이 발생하면 실행시킬 clear 함수를 등록합니다.(브라우저에게 알려줌)
+//브라우저는 #clear 의 클릭이 발생하는지 listener(감시)하고 있다가 사용자가 클릭하면
+// clear 함수를 큐(자료구조)에 저장 합니다. (FIFO - 선입선출) 
+//브라우저 스케줄링을 통해서 큐에 저장된 함수들을 순서대로 실행시켜 줍니다.
+//큐에 저장하는 순서와 실행 순서는 개발자가 예측한 순서와 다를 수 있습니다.
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 //selectAll 버튼 동작
 const selectAll =function(){
@@ -83,11 +89,16 @@ const resultOne = function (result){
     document.querySelector('#email').value=result.email
     document.querySelector('#birth').value=result.birth
     document.querySelector('#reg_date').value=result.reg_date
+    const subjectAll = result.subjects;
+    arrSubject.splice(0,arrSubject.length)
     document.querySelectorAll('.subjects').forEach(item =>{
-        if(result.subjects.includes(item.value))    //includes 는 리턴타입이 boolean / indexOf 는 리턴타입이 int 라서 한번 더 조건식을 계산해야함.
+        if(subjectAll!=null && subjectAll.includes(item.value)) {    //includes 는 리턴타입이 boolean / indexOf 는 리턴타입이 int 라서 한번 더 조건식을 계산해야함.
             item.checked = true                     //contains(자바 String 메소드) 는 자바스크립트에서 사용불가
-        // result.subjects 조회한 관심분야가 각 체크박스(subjects 클래스) 요소의 value 를 포함하고 있는지
-        //각각 비교하여 checked 를 true 또는 false 로 설정하기
+            arrSubject.push(item.value)           //조회한 관심분야로 배열 초기화
+            // result.subjects 조회한 관심분야가 각 체크박스(subjects 클래스) 요소의 value 를 포함하고 있는지
+            //각각 비교하여 checked 를 true 또는 false 로 설정하기
+        }
+        else item.checked = false
     })
 }
 
@@ -169,6 +180,8 @@ const save = function () {              //리터럴 형식의 함수선언 : 끌
     //id 중복확인
     let yn=false
     console.log("idcheck : ",isvalid)
+    //비동기 함수 안에서 비동기 함수를 호출하는 것은 원하는 실행 결과를 받을 수 없음.
+    //실행 타이밍이 우리의 예측과 다릅니다. 여기 idcheck 함수를 호출하면 안됨.
     if(!isvalid){           //idcheck 에 리턴이 true 이기 때문에 반대로 false 일때 사용할 alert
         alert('이미 사용중인 아이디 입니다.')
         return
@@ -226,25 +239,28 @@ document.querySelector('#save').addEventListener('click', save);
 //update 버튼 동작
 const update = function () {
     const id = document.querySelector('#id').value;
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', '/api/bookuser'+id);
 
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
     //1. 입력값 가져오기
     const name = document.querySelector('#name').value;
     const email = document.querySelector('#email').value;
     const birth = document.querySelector('#birth').value;
+    const password = document.querySelector('#password').value;
 
     //2. 입력값으로 자바스크립트 객체 생성(자바스크립트 객체는 미리 타입을 정의하지 않고 사용할수 있습니다.)
     const userData = {
+        id: id,
         name: name,
         email: email,
         birth: birth,
+        password: password,
         subjects: arrSubject.toString()
     };
     //3. 자바스크립트 객체를 json 전송을 위해 직렬화(문자열로 변환)
     const jsonData = JSON.stringify(userData);
 
+    const xhr = new XMLHttpRequest()
+    xhr.open('PATCH', '/api/bookuser/'+id);
+    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
     xhr.send(jsonData);
 
     xhr.onload = function () {
@@ -252,7 +268,7 @@ const update = function () {
         if (xhr.status === 200 || xhr.status === 201) {
             if(resultObj.count == 1){
                 clear()
-                document.querySelector('.card-header').innerHTML ='새로운 회원 \''+id+'\'가입 되었습니다'
+                document.querySelector('.card-header').innerHTML ='회원 \'' + id + '\'의 정보가 수정되었습니다.'
                 document.querySelector('.card-header').style.color='blue'
             }
         } else {
@@ -306,3 +322,56 @@ const deleteUser = function () {
 }
 
 document.querySelector('#delete').addEventListener('click',deleteUser)
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+//컬럼별 수정 버튼 동작
+//실제 프로젝트 할때는 패스워드, 이메일 변경 1개 필드 변경할 때 - 모달을 이용해서 입력값 받기
+const changeOneField = function (e){
+    e.stopPropagation();
+    const target = e.target
+    if(target.tagName != 'BUTTON') return
+    const field=target.getAttribute("data-num")
+    const id = document.querySelector('#id').value          //where 에 필요한 id
+    let value = ''
+    if(field == 'subjects')         //변경하려는 필드가 '관신분야' 일 때
+        value=arrSubject.toString()
+    else
+        value=document.getElementById(field).value      //field는 변수명입니다.
+
+    console.log('field : ',field)
+    console.log('value : ',value)
+    
+    const jsObj={id:id}             //첫번째 id 는 프로퍼티 이름. 두번째 id 는 변수명
+    jsObj[field] = value                    //jsObj 객체에 새로운 프로퍼티 field 와 그 값 추가
+    console.log('object 중간 확인 : ',jsObj)
+
+    const jsStr = JSON.stringify(jsObj)
+    console.log(jsStr)
+
+    const xhr = new XMLHttpRequest()
+    xhr.open('PATCH','/api/bookuser/'+field+'/'+id)
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+    xhr.send(jsStr)      //5. 요청 전송. POST에서는  body와 함께 보냅니다.
+    xhr.onload=function(){               //요청에 대한 응답받았을 때  onload 이벤트 핸들러 함수
+        const resultObj = JSON.parse(xhr.response);
+        if(xhr.status === 200 || xhr.status ===201){
+            if(resultObj.count==1) {
+                document.querySelector('.card-header').innerHTML = '회원 \'' + id + '\'의 \'' + resultObj.field + '\' 수정되었습니다.'
+                document.querySelector('.card-header').style.color = 'orange'
+            }
+        }else {
+            console.log('오류1-',xhr.response)
+            console.log('오류2-',xhr.status)
+            const values = Object.values(resultObj);
+            console.log(values)
+            let resultMsg =''
+            values.forEach(msg =>
+                resultMsg += msg +"<br>")
+
+            document.querySelector('.card-header').innerHTML = resultMsg
+        }
+        setTimeout(clear,15000)
+    }
+}
+document.querySelector('.card-body').addEventListener('click',changeOneField)

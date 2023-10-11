@@ -68,13 +68,42 @@ public class BookUserApiController {
 		return resultMap;
 	}
 
-	@PostMapping("/bookuser/{id}")
+	/*@PostMapping("/bookuser/{id}")
 	public Map<String, Integer> update(@RequestBody BookUser vo, String id){
 		int result = bookUserMapper.changeMany(vo);
 		Map<String,Integer> resultMap = new HashMap<>();
 		resultMap.put("result",result);
 
 		return resultMap;
+	}*/
+
+	@PatchMapping("/bookuser/{field}/{id}")
+	public Map<String, Object> changeOneField(@PathVariable String id,
+											  @PathVariable String field,
+											  @RequestBody @Valid BookUser bookUser){		//데이터는 1개이지만 유효성 검증을 위해.
+		Map<String,Object> map = new HashMap<>();
+		map.put("field",field);
+		map.put("id",id);
+		switch (field){
+			case "email" -> map.put("value",bookUser.getEmail());
+			case "birth" -> map.put("value",bookUser.getBirth());
+			case "password" -> map.put("value",bookUser.getPassword());
+			case "subjects" -> map.put("value",bookUser.getSubjects());
+		}
+
+		int count = bookUserMapper.changeOneField(map);
+		map.put("count",count);
+
+		return map;
+	}
+
+	@PatchMapping("/bookuser/{id}")
+	public Map<String,Integer> update(@RequestBody @Valid BookUser bookUser){
+		Map<String,Integer> map = new HashMap<>();
+		int count = bookUserMapper.changeMany(bookUser);
+		map.put("count",count);
+
+		return map;
 	}
 
 	
