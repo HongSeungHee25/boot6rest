@@ -8,6 +8,7 @@ const clear = function(){
     document.querySelector('#reg_date').value=''
     document.querySelectorAll('.subjects').forEach(item => item.checked =false)
     document.querySelector('#default').innerHTML =`<div class="card-header" id="messageBot">나는 메시지봇입니다.</div>`
+    document.querySelector('#idMessage').innerHTML =`<span class="text-sm"></span>`
 }
 
 document.querySelector('#clear').addEventListener('click',clear)
@@ -148,12 +149,12 @@ const idcheck = function (){
             //서버 응답 exist 값으로 isValidId 저장. 존재하면 새로운 회원은 사용할 수 없는 아이디
             isvalid = !result.exist                               //result.exist 는 true 또는 false 를 리턴합니다.
             if(isvalid){                                          //존재하지 않은 id 일때 실행
-                document.querySelector('#idMessage').innerHTML = '없는 아이디 입니다. 새로운 회원으로 사용 가능합니다.'
-                document.querySelector('#idMessage').style.color = 'red'
+                document.querySelector('#idMessage > span').innerHTML = '없는 아이디 입니다. 새로운 회원으로 사용 가능합니다.'
+                document.querySelector('#idMessage > span').style.color = 'red'
                 // userid = id
             }else{                                                //존재하는 id 일때 실행
-                document.querySelector('#idMessage').innerHTML = '존재하는 아이디 입니다. 회원 정보 조회하세요.'
-                document.querySelector('#idMessage').style.color = 'blue'
+                document.querySelector('#idMessage > span').innerHTML = '존재하는 아이디 입니다. 회원 정보 조회하세요.'
+                document.querySelector('#idMessage > span').style.color = 'blue'
             }
         }else {
             console.error('오류1',xhr.status)
